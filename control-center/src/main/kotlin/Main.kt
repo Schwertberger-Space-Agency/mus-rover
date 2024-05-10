@@ -4,13 +4,22 @@ import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import kotlinx.coroutines.CoroutineDispatcher
+
+enum class Direction(val value: String) {
+    W("W"),
+    S("S"),
+    L("L"),
+    R("R")
+}
+
+enum class Velocity(val value: String) {
+    B("B"),
+    E("E")
+}
 
 @Composable
 @Preview
@@ -27,6 +36,13 @@ fun App() {
             }
         }
     }
+}
+
+@Composable
+fun sendMessage(direction: Direction, velocity: Velocity) {
+    val coroutineScope = rememberCoroutineScope()
+    val client by remember { mutableStateOf(MqttClient("mus-rover/in-controls")) }
+    client.publish(direction.value + velocity.value, )
 }
 
 fun main() = application {

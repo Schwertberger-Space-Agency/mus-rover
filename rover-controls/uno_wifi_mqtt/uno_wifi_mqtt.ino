@@ -85,7 +85,7 @@ void loop()
   //mqttClient.publish("P24730/outTopic","cyclic message from arduino ;-)");
   char msg[100] = "*** cyclic message from arduino ;-)***     "; 
   msg[39] = msgCounter++ % 9 + '0'; // make a char and stay single digit
-  mqttClient.publish("mus-rover/inControls",msg);
+  mqttClient.publish("mus-rover/in-controls",msg);
   Serial.println("outTopic message published");
   Serial.println(msg);
 }

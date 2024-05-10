@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/control-center.iml" filepath="$PROJECT_DIR$/.idea/control-center.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/compose-desktop-sandbox.iml" filepath="$PROJECT_DIR$/.idea/modules/compose-desktop-sandbox.iml" />
     </modules>
   </component>
 </project>

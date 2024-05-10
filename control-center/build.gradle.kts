@@ -4,6 +4,7 @@ val ktorVersion: String by project
 val sqlDelightVersion: String by project
 val dateTimeVersion: String by project
 val coroutinesVersion: String by project
+val mqttVersion: String by project
 
 plugins {
     kotlin("jvm")
@@ -32,6 +33,9 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("com.squareup.sqldelight:runtime:$sqlDelightVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:$dateTimeVersion")
+
+    implementation("io.github.davidepianca98:kmqtt-common:$mqttVersion")
+    implementation("io.github.davidepianca98:kmqtt-client:$mqttVersion")
 }
 
 compose.desktop {
