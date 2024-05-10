@@ -1,35 +1,36 @@
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import mqtt.MQTTVersion
 import mqtt.packets.Qos
 import mqtt.packets.mqttv5.ReasonCode
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class MqttClient(
+class MqttHandler(
     private val topic: String
 ) {
     private var client: MQTTClient = MQTTClient(
         MQTTVersion.MQTT5,
         "broker.mqttdashboard.com",
         1883,
-        null
+        null,
+        clientId = "control-center"
     ) { message ->
         println(message.payload?.toByteArray()?.decodeToString())
     }
 
-    fun connect() {
-//        println("Connecting to MQTT broker")
-    }
+//    init {
+//        client.publish(false, Qos.AT_MOST_ONCE, topic, "WB".encodeToByteArray().toUByteArray())
+//        client.run()
+//    }
 
     fun disconnect() {
         println("Disconnecting from MQTT broker")
         client.disconnect(ReasonCode.SUCCESS)
     }
 
-    fun publish(message: String, coroutineScope: CoroutineDispatcher) {
+    fun publish(message: String) {
         println("Publishing message to topic $topic: $message")
-        client.publish(false, Qos.EXACTLY_ONCE, topic, message.encodeToByteArray().toUByteArray())
-        client.runSuspend(coroutineScope)
+        client.publish(false, Qos.AT_MOST_ONCE, topic, message.encodeToByteArray().toUByteArray())
+        client.step()
+        println("Finish publish")
     }
 
     fun subscribe() {}
