@@ -15,6 +15,8 @@ WiFiClient client;
 PubSubClient mqttClient(client);
 
 Servo steeringServo;
+const int servoPin = 9;
+const int forwardDistancePin = 2;
 int pos = 0;
 
 void setup() {
@@ -51,43 +53,86 @@ void setup() {
   Serial.println(mqttServerAddress);
  
   mqttClient.setServer(mqttServerAddress, mqttServerPort);
-  mqttClient.setCallback(callback);
+  mqttClient.setCallback(onMessageReceive);
 
-  Serial.println("Attaching servo to pin 9");
-  steeringServo.attach(9);
+  Serial.println("Attaching servo");
+  steeringServo.attach(servoPin);
 }
 
 void loop() {
   if (!mqttClient.connected()) {
     reconnect();
   }
-
-  Serial.println("Moving Servo forward...");
-  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    steeringServo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-  }
-
-  Serial.println("Moving Servo backward...");
-  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-    steeringServo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-  }
-
   // receive message
   mqttClient.loop();
   delay(1000);
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i=0;i<length;i++) {
-    Serial.print((char)payload[i]);
+void moveServo(Servo &servoRef, bool forward) {
+  int limit, stepsize;
+  if(forward) {
+    limit = 90; // pos is either 0 or -90
+    stepsize = 1;
+  } else {
+    limit = -90; // pos is either 0 or 90
+    stepsize = -1;
   }
-  Serial.println();
+
+  for(; pos != limit; pos += stepsize)
+  {
+    servoRef.write(pos);
+    delay(20); // wait for servo to reach its position
+  }
+}
+
+int getDistance(int distanceScannerPin) {
+  long durationMs, cm;
+
+  // Write to ultrasound sensor
+  pinMode(distanceScannerPin, OUTPUT); // pin is now set to write mode
+  digitalWrite(distanceScannerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(distanceScannerPin, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(distanceScannerPin, LOW);
+
+  // Read from ultrasound sensor
+  pinMode(distanceScannerPin, INPUT); // pin is now set to read mode
+  durationMs = pulseIn(distanceScannerPin, HIGH);
+
+  cm = microsecondsToCentimeter(durationMs);
+  return cm;
+}
+
+long microsecondsToCentimeter(long microseconds) {
+  // 340m/s or 29 microseconds per centimeter
+  return microseconds / 29 / 2; // divided by 2 because sound also needs to travel back to us
+}
+
+void onMessageReceive(char* topic, byte* payload, unsigned int length) {
+  String command;
+  for (int i=0;i<length;i++) {
+    command.concat(payload[i]);
+  }
+
+  if(command.length() != 2) { return; } // invalid command
+
+  if(command == "fl") // forward left
+  {
+    // TODO
+  }
+  else if(command == "fr") // forward right
+  {
+    // TODO
+  }
+  else if(command == "bl") // backward left
+  {
+    // TODO
+  }
+  else if(command == "br") // backward right
+  {
+    // TODO
+  }
 }
 
 // reconnect logic for MQTT
