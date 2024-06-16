@@ -48,6 +48,7 @@ Als Broker dient derselbe, der bereits aus der Übung bekannt ist: `broker.mqttd
 Das Command Center dient zur Steuerung des Rovers und besteht aus einem einfachen MVP, der so simpel wie möglich gehalten ist, da dieser nur ein Mittel zum Zweck ist. Konkret sendet das Command Center Richtungs- und Beschleunigungskommandos an den MQTT Broker (wie in der Sektion Kommunikation und Protokoll beschrieben), von welchem der Rover wiederum dieselben Commands bezieht.
 
 Die fertige Applikation besteht aus vier Richtungs-Buttons:
+
 ![](images/command_center.png)
 
 Zur Implementierung wurde Kotlin mit dem Desktop-App Framework *Desktop Compose* verwendet. Dies stellt eine deklarative Möglichkeit zur Definition von nativen Apps Desktop-Apps zur Verfügung. Die Definition von UI-Elementen ist dem Weg von React angepasst.
