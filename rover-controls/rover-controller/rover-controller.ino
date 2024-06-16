@@ -3,6 +3,8 @@
 #include <PubSubClient.h>
 #include <Servo.h>
 
+enum class Direction {Forward, Backward, Left, Right};
+
 char mqttServerAddress[] = "broker.mqttdashboard.com";
 int mqttServerPort = 1883;
 int msgCounter = 0;
@@ -16,8 +18,12 @@ PubSubClient mqttClient(client);
 
 Servo steeringServo;
 const int servoPin = 9;
-const int forwardDistancePin = 2;
+const int forwardDistancePin = 3;
+const float minDistance = 3;
 int pos = 0;
+
+bool shouldMove = false;
+Direction moveDirection = Direction::Forward;
 
 void setup() {
   Serial.begin(9600);
@@ -29,14 +35,10 @@ void setup() {
     // don't continue:
     while (true);
   }
-  // check firmware version. 1.1.0 is mandatory
-  // wifi shield is usually delivered with 1.0.0
-  // and an upgrade to 1.1.0 is necessary!
+
   String fv = WiFi.firmwareVersion();
   Serial.print("firmwareVersion: ");
   Serial.println(fv);
-  if ( fv != "1.1.0" )
-    Serial.println("Please upgrade the firmware"); 
 
   // attempt to connect to Wifi network:
   while (status != WL_CONNECTED) {
@@ -49,10 +51,8 @@ void setup() {
   }
   Serial.println("Connected to wifi");
 
-  Serial.print("\nConnect to MQTT broker: ");
-  Serial.println(mqttServerAddress);
- 
   mqttClient.setServer(mqttServerAddress, mqttServerPort);
+  Serial.print("Connected to MQTT broker");
   mqttClient.setCallback(onMessageReceive);
 
   Serial.println("Attaching servo");
@@ -65,27 +65,52 @@ void loop() {
   }
   // receive message
   mqttClient.loop();
-  delay(1000);
+
+  if(shouldMove)
+  {
+    // Because we cannot move forward/backward we simplified the condition, that if something is in the way, the rover cannot move
+    // of course in reality if the forward sensor detects something, we should be able to move backward still
+    if(getDistanceCM(forwardDistancePin) < minDistance)
+    {
+      Serial.println("Obstacle detected. Cannot move");
+      delay(20);
+      return;
+    }
+
+    if (moveDirection == Direction::Right)
+    {
+      moveServo(steeringServo, true);
+    }
+    else if(moveDirection == Direction::Left)
+    {
+      moveServo(steeringServo, false);
+    }
+  }
+
+  delay(20);
 }
 
 void moveServo(Servo &servoRef, bool forward) {
   int limit, stepsize;
   if(forward) {
-    limit = 90; // pos is either 0 or -90
+    limit = 120; // pos is either 0 or -45
     stepsize = 1;
   } else {
-    limit = -90; // pos is either 0 or 90
+    limit = -120; // pos is either 0 or 45
     stepsize = -1;
   }
 
-  for(; pos != limit; pos += stepsize)
-  {
-    servoRef.write(pos);
-    delay(20); // wait for servo to reach its position
+  Serial.print("Moving Servo to position...");
+  Serial.println(pos);
+  pos += stepsize;
+  if((forward && pos > limit) || (!forward && pos < limit)) {
+    pos = limit;
   }
+  servoRef.write(pos);
+  delay(1000); // wait for servo to reach its position
 }
 
-int getDistance(int distanceScannerPin) {
+int getDistanceCM(int distanceScannerPin) {
   long durationMs, cm;
 
   // Write to ultrasound sensor
@@ -112,26 +137,45 @@ long microsecondsToCentimeter(long microseconds) {
 void onMessageReceive(char* topic, byte* payload, unsigned int length) {
   String command;
   for (int i=0;i<length;i++) {
-    command.concat(payload[i]);
+    command.concat((char)payload[i]);
   }
 
-  if(command.length() != 2) { return; } // invalid command
+  if(command.length() != 2) 
+  { 
+    // invalid command
+    Serial.print("invalid command received. Command was: ");
+    Serial.println(command);
+    return; 
+  } 
 
-  if(command == "fl") // forward left
-  {
-    // TODO
+  Serial.print("Received command...");
+  Serial.println(command);
+
+  switch (command[0]) {
+    case 'F':
+      moveDirection = Direction::Forward;
+      break;
+    case 'B':
+      moveDirection = Direction::Backward;
+      break;
+    case 'L':
+      moveDirection = Direction::Left;
+      break;
+    case 'R':
+      moveDirection = Direction::Right;
+      break;
+    default:
+      Serial.println("Received invalid direction");
   }
-  else if(command == "fr") // forward right
-  {
-    // TODO
-  }
-  else if(command == "bl") // backward left
-  {
-    // TODO
-  }
-  else if(command == "br") // backward right
-  {
-    // TODO
+  switch (command[1]) {
+    case 'B':
+      shouldMove = true;
+      break;
+    case 'E':
+      shouldMove = false;
+      break;
+    default:
+      Serial.println("Received invalid start stop notification");
   }
 }
 
