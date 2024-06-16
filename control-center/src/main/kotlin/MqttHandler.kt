@@ -16,11 +16,6 @@ class MqttHandler(
         println(message.payload?.toByteArray()?.decodeToString())
     }
 
-//    init {
-//        client.publish(false, Qos.AT_MOST_ONCE, topic, "WB".encodeToByteArray().toUByteArray())
-//        client.run()
-//    }
-
     fun disconnect() {
         println("Disconnecting from MQTT broker")
         client.disconnect(ReasonCode.SUCCESS)
