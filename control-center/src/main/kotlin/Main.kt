@@ -1,15 +1,13 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +37,9 @@ fun App() {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 DirectionalButton(Direction.L)
+                Spacer(modifier = Modifier.width(16.dp))
                 DirectionalButton(Direction.B)
+                Spacer(modifier = Modifier.width(16.dp))
                 DirectionalButton(Direction.R)
             }
         }
@@ -78,7 +78,7 @@ fun sendMessage(direction: Direction, velocity: Velocity, coroutineScope: Corout
 }
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
+    Window(onCloseRequest = ::exitApplication, title = "Command Center") {
         App()
     }
 }
