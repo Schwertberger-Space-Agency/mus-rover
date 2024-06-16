@@ -12,11 +12,36 @@ Die Basis des Projekts stellt ein Rover zusammengebaut aus Klemmbausteinen der M
 
 Im ersten Teil des Projekts soll die Steuerung des Rovers durch ein "Command Center" ermöglicht werden. Dies soll ermöglicht werden, indem die Lenkanlage mithilfe mittels eines Servomotors gesteuert kontrolliert wird. Dieser Servomotor ist wiederum mit einem Arduino verbunden, der dessen Steuerung übernimmt. Mittels MQTT empfängt der Arduino vom Command Center Commands, in welche Richtung dieser sich zu bewegen hat. Dieser Kommunikationsansatz ist deklarativ zu betrachten, da der Rover die Möglichkeit hat, aufgrund von Hindernissen zum Beispiel Commands außer Kraft zu setzen. Schlussendlich liegt es im Interesse der Menschheit, die Zerstörung eines Mars Rovers zu vermeiden.
 
-Sobald die Steuerung des Rovers funktioniert, soll 
+Sobald die Steuerung des Rovers funktioniert, sollen Ultraschallsensoren installiert werden, die zur Obstacle Detection und Avoidance dienen sollen. Erkennen die Ultraschallsensoren einen Gegenstand, der in einer Entfernung unter dem Schwellwert liegen, soll die weitere Annäherung an dieses Objekt verhindert werden. In anderen Worten blockiert der Motor, wenn ein gefährliches Objekt erkannt wird.
 
 ## Implementierung
 
+Die Implementierung des Rovers kann in drei Teile aufgespalten werden: Kommunikation, Command Center und der eigentliche Mars Rover. Die Implementierung dieser drei Teilbereiche erklärt diese Sektion näher.
+
 ### Kommunikation und Protokoll
+
+Zur Verwendung wird wie bereits verwendet MQTT verwendet. Das Steuerungsprotokoll ist so unkompliziert wird möglich gehalten. Jede Nachricht des Command Centers and den Rover besteht aus zwei Teilen: Direction und Velocity. Jeder dieser Teil wird durch jeweils einen Charakter repräsentiert.
+
+Die Sektion Direction erlaubt vier verschiedene Richtungen F (Forward), B (Backwards), L (Left) und R (Right). Die Sektion Velocity ist als "Toggle" zu verstehen, denn es besteht aus den Commands B (Begin) und E (End).
+
+Die Repräsentierung dieser Commands erfolgt im Command Center als Enum:
+```kt
+enum class Direction(val value: String) {
+    F("F"),
+    B("B"),
+    L("L"),
+    R("R")
+}
+
+enum class Velocity(val value: String) {
+    B("B"),
+    E("E")
+}
+```
+
+Um das Protokoll besser zu verstehen ein Beispiel: Will ein User die Räder nach links stellen, so sendet dieser als erstes den Command `LB`. Daraufhin beginnt der Servomotor zu arbeiten und das Rad dreht sich. Soll das Wendemanöver beendet werden, sendet der User das Kommando `LE`, um die Lenkung nach links zu beenden.
+
+Als Broker dient derselbe, der bereits aus der Übung bekannt ist: `broker.mqttdashboard.com` mit dem Topic `mus-rover/in-controls`.
 
 ### Command Center
 
