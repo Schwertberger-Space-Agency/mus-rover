@@ -45,6 +45,69 @@ Als Broker dient derselbe, der bereits aus der Übung bekannt ist: `broker.mqttd
 
 ### Command Center
 
+Das Command Center dient zur Steuerung des Rovers und besteht aus einem einfachen MVP, der so simpel wie möglich gehalten ist, da dieser nur ein Mittel zum Zweck ist. Konkret sendet das Command Center Richtungs- und Beschleunigungskommandos an den MQTT Broker (wie in der Sektion Kommunikation und Protokoll beschrieben), von welchem der Rover wiederum dieselben Commands bezieht.
+
+Die fertige Applikation besteht aus vier Richtungs-Buttons:
+
+![](images/command_center.png)
+
+Zur Implementierung wurde Kotlin mit dem Desktop-App Framework *Desktop Compose* verwendet. Dies stellt eine deklarative Möglichkeit zur Definition von nativen Apps Desktop-Apps zur Verfügung. Die Definition von UI-Elementen ist dem Weg von React angepasst.
+
+So kann zum Beispiel durch die folgende Funktion einer der vier Richtungs-Buttons definiert werden:
+```kt
+@Composable
+fun DirectionalButton(direction: Direction) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+
+    if (pressed) {
+        println(direction.value + Velocity.B.value)
+        sendMessage(direction, Velocity.B)
+
+        DisposableEffect(Unit) {
+            onDispose {
+                println(direction.value + Velocity.E.value)
+                sendMessage(direction, Velocity.E)
+            }
+        }
+    }
+
+    Button(
+        onClick = {},
+        interactionSource = interactionSource,
+    ) {
+        Text(direction.value)
+    }
+}
+```
+
+Durch einen Linksclick auf einen Richtungs-Button wird der Command `<Direction>B` an MQTT gesendet, um zu signalisieren dass die Bewegung in die Richtung nun beginnen soll. Beim loslassen des Linksclicks sendet das Command Center den Command `<Direction>E` um das Ende des Bewegungsvorganges zu signalisieren. 
+
+Das Command Center verwendet die Bibliothek `io.github.davidepianca98:kmqtt-client`, welche MQTT Bindings für Kotlin zur Verfügung stellt. Die Erstellung des MQTT Clients erfolgt wie folgt:
+
+```kt
+private var client: MQTTClient = MQTTClient(
+    MQTTVersion.MQTT5,
+    "broker.mqttdashboard.com",
+    1883,
+    null,
+    clientId = "control-center"
+) { message ->
+    println(message.payload?.toByteArray()?.decodeToString())
+}
+```
+
+Das Veröffentlichen von Nachrichten ist dementsprechend auch sehr einfach und erfolgt mit folgender Funktion:
+```kt
+fun publish(message: String) {
+    println("Publishing message to topic $topic: $message")
+    client.publish(false, Qos.AT_MOST_ONCE, topic, message.encodeToByteArray().toUByteArray())
+    client.step()
+    println("Finish publish")
+}
+```
+
+
 ### Mars Rover
 
 Um den Rover zu steuern, musste überlegt werden, wie man die Lego-Welt mit der echten Welt (allen voran den Servomotor) verbinden kann. Damit wurde es möglich, den Rover auch tatsächlich zu steuern. So wurde ein Lego Zahnrad an dem Servomotor befestigt, welches mittels anderen Zahnrädern und Verbindungsstäben die Lenkachse verschieben kann. Des weiteren, musste der Ultraschallsensor am Rover befestigt werden, so dass diese möglichst stabil sitzen und nicht vom Rover selbst verdeckt werden. Damit das alles möglich ist, musste der Rover umfangreich umgebaut werden, so dass der Arduino, das Steckbrett sowie der Servo und Ultraschallsensor am Rover platz finden. Um den Motor ansteuern zu können, wurde ein Motorcontrollerboard besorgt (siehe Abbildung unten), da ein einfaches Relais keine Rückwärtssteuerung erlaubt hätte.

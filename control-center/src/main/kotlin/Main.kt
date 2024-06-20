@@ -50,16 +50,15 @@ fun App() {
 fun DirectionalButton(direction: Direction) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val coroutineScope = rememberCoroutineScope()
 
     if (pressed) {
         println(direction.value + Velocity.B.value)
-        sendMessage(direction, Velocity.B, coroutineScope)
+        sendMessage(direction, Velocity.B)
 
         DisposableEffect(Unit) {
             onDispose {
                 println(direction.value + Velocity.E.value)
-                sendMessage(direction, Velocity.E, coroutineScope)
+                sendMessage(direction, Velocity.E)
             }
         }
     }
@@ -71,10 +70,9 @@ fun DirectionalButton(direction: Direction) {
         Text(direction.value)
     }
 }
-fun sendMessage(direction: Direction, velocity: Velocity, coroutineScope: CoroutineScope) {
-//    coroutineScope.launch(Dispatchers.IO) {
-        client.publish(direction.value + velocity.value)
-//    }
+
+fun sendMessage(direction: Direction, velocity: Velocity) {
+    client.publish(direction.value + velocity.value)
 }
 
 fun main() = application {
