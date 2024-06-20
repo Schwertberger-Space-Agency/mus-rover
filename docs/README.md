@@ -10,7 +10,7 @@ Das Projekt versucht anhand eines Lego-Rover-Prototypen unter Verwendung des Ard
 
 Die Basis des Projekts stellt ein Rover zusammengebaut aus Klemmbausteinen der Marke Clementoni. Dessen Grundgerüst besteht aus drei Radachsen, einer Lenkanlage zur manuellen Richtungssteuerung und einem Elektromotor welcher den Rover vor- oder rückwärts treibt. Der Elektromotor wird durch eine Batterie gespeist.
 
-Im ersten Teil des Projekts soll die Steuerung des Rovers durch ein "Command Center" ermöglicht werden. Dies soll ermöglicht werden, indem die Lenkanlage mithilfe mittels eines Servomotors gesteuert kontrolliert wird. Dieser Servomotor ist wiederum mit einem Arduino verbunden, der dessen Steuerung übernimmt. Mittels MQTT empfängt der Arduino vom Command Center Commands, in welche Richtung dieser sich zu bewegen hat. Dieser Kommunikationsansatz ist deklarativ zu betrachten, da der Rover die Möglichkeit hat, aufgrund von Hindernissen zum Beispiel Commands außer Kraft zu setzen. Schlussendlich liegt es im Interesse der Menschheit, die Zerstörung eines Mars Rovers zu vermeiden.
+Im ersten Teil des Projekts soll die Steuerung des Rovers durch ein "Command Center" ermöglicht werden. Dies soll ermöglicht werden, indem die Lenkanlage mithilfe eines Servomotors gesteuert wird. Dieser Servomotor ist wiederum mit einem Arduino verbunden, der dessen Steuerung übernimmt. Mittels MQTT empfängt der Arduino vom Command Center Commands, in welche Richtung dieser sich zu bewegen hat. Dieser Kommunikationsansatz ist deklarativ zu betrachten, da der Rover die Möglichkeit hat, aufgrund von Hindernissen zum Beispiel Commands außer Kraft zu setzen. Schlussendlich liegt es im Interesse der Menschheit, die Zerstörung eines Mars Rovers zu vermeiden.
 
 Sobald die Steuerung des Rovers funktioniert, sollen Ultraschallsensoren installiert werden, die zur Obstacle Detection und Avoidance dienen sollen. Erkennen die Ultraschallsensoren einen Gegenstand, der in einer Entfernung unter dem Schwellwert liegen, soll die weitere Annäherung an dieses Objekt verhindert werden. In anderen Worten blockiert der Motor, wenn ein gefährliches Objekt erkannt wird.
 
@@ -20,7 +20,7 @@ Die Implementierung des Rovers kann in drei Teile aufgespalten werden: Kommunika
 
 ### Kommunikation und Protokoll
 
-Zur Verwendung wird wie bereits verwendet MQTT verwendet. Das Steuerungsprotokoll ist so unkompliziert wird möglich gehalten. Jede Nachricht des Command Centers and den Rover besteht aus zwei Teilen: Direction und Velocity. Jeder dieser Teil wird durch jeweils einen Charakter repräsentiert.
+Zur Verwendung wird wie bereits erwähnt MQTT verwendet. Das Steuerungsprotokoll ist so unkompliziert wird möglich gehalten. Jede Nachricht des Command Centers an den Rover besteht aus zwei Teilen: Direction und Velocity. Jeder dieser Teil wird durch jeweils einen Charakter repräsentiert.
 
 Die Sektion Direction erlaubt vier verschiedene Richtungen F (Forward), B (Backwards), L (Left) und R (Right). Die Sektion Velocity ist als "Toggle" zu verstehen, denn es besteht aus den Commands B (Begin) und E (End).
 
@@ -46,6 +46,15 @@ Als Broker dient derselbe, der bereits aus der Übung bekannt ist: `broker.mqttd
 ### Command Center
 
 ### Mars Rover
+
+Um den Rover zu steuern, musste überlegt werden, wie man die Lego-Welt mit der echten Welt (allen voran den Servomotor) verbinden kann. Damit wurde es möglich, den Rover auch tatsächlich zu steuern. So wurde ein Lego Zahnrad an dem Servomotor befestigt, welches mittels anderen Zahnrädern und Verbindungsstäben die Lenkachse verschieben kann. Des weiteren, musste der Ultraschallsensor am Rover befestigt werden, so dass diese möglichst stabil sitzen und nicht vom Rover selbst verdeckt werden. Damit das alles möglich ist, musste der Rover umfangreich umgebaut werden, so dass der Arduino, das Steckbrett sowie der Servo und Ultraschallsensor am Rover platz finden. Um den Motor ansteuern zu können, wurde ein Motorcontrollerboard besorgt (siehe Abbildung unten), da ein einfaches Relais keine Rückwärtssteuerung erlaubt hätte.
+![Motorcontrollerboard "AZ-L298N"](/images/motordriver.png)
+
+Beim Motor selbst, mussten die Drähte, welche zum Schalter führen abgetrennt werden, damit diese an den Motorcontroller angeschlossen werden konnten. Leider hatten wir große Probleme, den Motor zum laufen zu bekommen, weswegen dieser Teil leider nicht erledigt werden konnte. Mehr dazu kann in der Sektion Ergebnisse anchgelesen werden.
+
+// TODO: ROVER BILD EINFÜGEN<br>
+Hier ist der fertige Rover zu sehen.
+
 
 ## Ergebnisse
 
