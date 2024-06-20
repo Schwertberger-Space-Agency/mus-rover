@@ -115,9 +115,131 @@ Um den Rover zu steuern, musste überlegt werden, wie man die Lego-Welt mit der 
 
 Beim Motor selbst, mussten die Drähte, welche zum Schalter führen abgetrennt werden, damit diese an den Motorcontroller angeschlossen werden konnten. Leider hatten wir große Probleme, den Motor zum laufen zu bekommen, weswegen dieser Teil leider nicht erledigt werden konnte. Mehr dazu kann in der Sektion Ergebnisse anchgelesen werden.
 
-// TODO: ROVER BILD EINFÜGEN<br>
-Hier ist der fertige Rover zu sehen.
+Die Hauptschleife der Anwendung hat zwei Aufgaben. Die erste ist das Abfragen, ob ein neuer Befehl eingegangen ist und der zweite Teil ist für die Steuerung des Rovers zuständig. Da für das Endprodukt die Motorsteuerung nicht eingebaut werden konnte, fehlt diese. Die Hinderniserkennung wurde dementsprechend ebenfalls vereinfacht, so dass der Rover, sich nicht mehr bewegen kann, sobald ein Hindernis erkannt wurde. Das ist natürlich keineswegs eine Option in der echten Welt. Aufgrund des Problems mit der Motorsteuerung, haben wir uns jedoch für diese simplifizierung entschieden. Die Implementierung der Hauptschleife sieht wie folgt aus:
+```arduino
+void loop() {
+  if (!mqttClient.connected()) {
+    reconnect();
+  }
+  // receive message
+  mqttClient.loop();
 
+  if(shouldMove)
+  {
+    if(getDistanceCM(forwardDistancePin) < minDistance)
+    {
+      Serial.println("Obstacle detected. Cannot move");
+      delay(20);
+      return;
+    }
+
+    if (moveDirection == Direction::Right)
+    {
+      moveServo(steeringServo, true);
+    }
+    else if(moveDirection == Direction::Left)
+    {
+      moveServo(steeringServo, false);
+    }
+  }
+
+  delay(20);
+}
+```
+
+Wie im obigen Code-Ausschnitt zu sehen ist, wird zuerst überprüft, ob der Ultraschallsensor ein Hinderniss erkannt hat. Um mehrere Ultraschallsensoren verwenden zu können, muss der Pin des Sensors angegeben werden. Der Wert, welcher vom Ultraschallsensor zurückkommt, wurde in CM umgerechnet, um die Distanzprüfung zu vereinfachen. Im folgenden ist die Implementierung der Distanzberechnung zu sehen:
+```arduino
+int getDistanceCM(int distanceScannerPin) {
+  long durationMs, cm;
+
+  // Write to ultrasound sensor
+  pinMode(distanceScannerPin, OUTPUT); // pin is now set to write mode
+  digitalWrite(distanceScannerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(distanceScannerPin, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(distanceScannerPin, LOW);
+
+  // Read from ultrasound sensor
+  pinMode(distanceScannerPin, INPUT); // pin is now set to read mode
+  durationMs = pulseIn(distanceScannerPin, HIGH);
+
+  cm = microsecondsToCentimeter(durationMs);
+  return cm;
+}
+
+long microsecondsToCentimeter(long microseconds) {
+  // 340m/s or 29 microseconds per centimeter
+  return microseconds / 29 / 2; // divided by 2 because sound also needs to travel back to us
+}
+```
+
+Damit die Lenkung angesprochen werden kann, wurde eine Funktion entwickelt, um die Steuerung zu vereinfachen. Die Funktion übernimmt die Prüfung, ob der Motor seinen erlaubten Drehbereich nicht verlässt und setzt den Servo auf die neu berechnete Position. Wichtig anzumerken ist, dass diese Funktion, in jeder Iteration der Hauptschleife einmal ausgeführt wird. Diese Designentscheidung hat den Ursprung im Kommunikationsprotokol, da die Steuerung begonnen und danach beendet werden kann. Hier ist die Implementierung der Servosteuerung zu sehen:
+
+```arduino
+void moveServo(Servo &servoRef, bool forward) {
+  int limit, stepsize;
+  if(forward) {
+    limit = 120; // pos is either 0 or -45
+    stepsize = 1;
+  } else {
+    limit = -120; // pos is either 0 or 45
+    stepsize = -1;
+  }
+
+  pos += stepsize;
+  if((forward && pos > limit) || (!forward && pos < limit)) {
+    pos = limit;
+  }
+  servoRef.write(pos);
+  delay(50); // wait for servo to reach its position
+}
+```
+
+Damit die Hauptschleife weis, wie der Rover angesteuert werden muss, werden globale Variablen verwendet. Diese werden in der Funktion gesetzt, welche für die Behandlung der MQTT Nachrichten zuständig ist. Diese liest die Nachricht, und interpretiert den Inhalt als Steuerungsbefehl. Die Implementierung war durch das einfach gewählte Protokoll, ebenfalls sehr minimal, wie hier zu sehen ist:
+``` arduino
+void onMessageReceive(char* topic, byte* payload, unsigned int length) {
+  String command;
+  for (int i=0;i<length;i++) {
+    command.concat((char)payload[i]);
+  }
+
+  if(command.length() != 2) 
+  { 
+    // invalid command
+    Serial.print("invalid command received. Command was: ");
+    Serial.println(command);
+    return; 
+  } 
+
+  switch (command[0]) {
+    case 'F':
+      moveDirection = Direction::Forward;
+      break;
+    case 'B':
+      moveDirection = Direction::Backward;
+      break;
+    case 'L':
+      moveDirection = Direction::Left;
+      break;
+    case 'R':
+      moveDirection = Direction::Right;
+      break;
+    default:
+      Serial.println("Received invalid direction");
+  }
+  switch (command[1]) {
+    case 'B':
+      shouldMove = true;
+      break;
+    case 'E':
+      shouldMove = false;
+      break;
+    default:
+      Serial.println("Received invalid start stop notification");
+  }
+}
+```
 
 ## Ergebnisse
 
