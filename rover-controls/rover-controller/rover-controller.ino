@@ -19,7 +19,7 @@ PubSubClient mqttClient(client);
 Servo steeringServo;
 const int servoPin = 9;
 const int forwardDistancePin = 3;
-const float minDistance = 3;
+const float minDistance = 5;
 int pos = 0;
 
 bool shouldMove = false;
@@ -100,14 +100,14 @@ void moveServo(Servo &servoRef, bool forward) {
     stepsize = -1;
   }
 
-  Serial.print("Moving Servo to position...");
-  Serial.println(pos);
   pos += stepsize;
   if((forward && pos > limit) || (!forward && pos < limit)) {
     pos = limit;
   }
+  Serial.print("Moving Servo to position...");
+  Serial.println(pos);
   servoRef.write(pos);
-  delay(1000); // wait for servo to reach its position
+  delay(100); // wait for servo to reach its position
 }
 
 int getDistanceCM(int distanceScannerPin) {
