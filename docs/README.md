@@ -111,12 +111,13 @@ fun publish(message: String) {
 ### Mars Rover
 
 Um den Rover zu steuern, musste überlegt werden, wie man die Lego-Welt mit der echten Welt (allen voran den Servomotor) verbinden kann. Damit wurde es möglich, den Rover auch tatsächlich zu steuern. So wurde ein Lego Zahnrad an dem Servomotor befestigt, welches mittels anderen Zahnrädern und Verbindungsstäben die Lenkachse verschieben kann. Des weiteren, musste der Ultraschallsensor am Rover befestigt werden, so dass diese möglichst stabil sitzen und nicht vom Rover selbst verdeckt werden. Damit das alles möglich ist, musste der Rover umfangreich umgebaut werden, so dass der Arduino, das Steckbrett sowie der Servo und Ultraschallsensor am Rover platz finden. Um den Motor ansteuern zu können, wurde ein Motorcontrollerboard besorgt (siehe Abbildung unten), da ein einfaches Relais keine Rückwärtssteuerung erlaubt hätte.
+
 ![Motorcontrollerboard "AZ-L298N"](/images/motordriver.png)
 
 Beim Motor selbst, mussten die Drähte, welche zum Schalter führen abgetrennt werden, damit diese an den Motorcontroller angeschlossen werden konnten. Leider hatten wir große Probleme, den Motor zum laufen zu bekommen, weswegen dieser Teil leider nicht erledigt werden konnte. Mehr dazu kann in der Sektion Ergebnisse anchgelesen werden.
 
 Die Hauptschleife der Anwendung hat zwei Aufgaben. Die erste ist das Abfragen, ob ein neuer Befehl eingegangen ist und der zweite Teil ist für die Steuerung des Rovers zuständig. Da für das Endprodukt die Motorsteuerung nicht eingebaut werden konnte, fehlt diese. Die Hinderniserkennung wurde dementsprechend ebenfalls vereinfacht, so dass der Rover, sich nicht mehr bewegen kann, sobald ein Hindernis erkannt wurde. Das ist natürlich keineswegs eine Option in der echten Welt. Aufgrund des Problems mit der Motorsteuerung, haben wir uns jedoch für diese simplifizierung entschieden. Die Implementierung der Hauptschleife sieht wie folgt aus:
-```arduino
+```cpp
 void loop() {
   if (!mqttClient.connected()) {
     reconnect();
@@ -148,7 +149,7 @@ void loop() {
 ```
 
 Wie im obigen Code-Ausschnitt zu sehen ist, wird zuerst überprüft, ob der Ultraschallsensor ein Hinderniss erkannt hat. Um mehrere Ultraschallsensoren verwenden zu können, muss der Pin des Sensors angegeben werden. Der Wert, welcher vom Ultraschallsensor zurückkommt, wurde in CM umgerechnet, um die Distanzprüfung zu vereinfachen. Im folgenden ist die Implementierung der Distanzberechnung zu sehen:
-```arduino
+```cpp
 int getDistanceCM(int distanceScannerPin) {
   long durationMs, cm;
 
@@ -176,7 +177,7 @@ long microsecondsToCentimeter(long microseconds) {
 
 Damit die Lenkung angesprochen werden kann, wurde eine Funktion entwickelt, um die Steuerung zu vereinfachen. Die Funktion übernimmt die Prüfung, ob der Motor seinen erlaubten Drehbereich nicht verlässt und setzt den Servo auf die neu berechnete Position. Wichtig anzumerken ist, dass diese Funktion, in jeder Iteration der Hauptschleife einmal ausgeführt wird. Diese Designentscheidung hat den Ursprung im Kommunikationsprotokol, da die Steuerung begonnen und danach beendet werden kann. Hier ist die Implementierung der Servosteuerung zu sehen:
 
-```arduino
+```cpp
 void moveServo(Servo &servoRef, bool forward) {
   int limit, stepsize;
   if(forward) {
@@ -192,12 +193,12 @@ void moveServo(Servo &servoRef, bool forward) {
     pos = limit;
   }
   servoRef.write(pos);
-  delay(50); // wait for servo to reach its position
+  delay(100); // wait for servo to reach its position
 }
 ```
 
 Damit die Hauptschleife weis, wie der Rover angesteuert werden muss, werden globale Variablen verwendet. Diese werden in der Funktion gesetzt, welche für die Behandlung der MQTT Nachrichten zuständig ist. Diese liest die Nachricht, und interpretiert den Inhalt als Steuerungsbefehl. Die Implementierung war durch das einfach gewählte Protokoll, ebenfalls sehr minimal, wie hier zu sehen ist:
-``` arduino
+```cpp
 void onMessageReceive(char* topic, byte* payload, unsigned int length) {
   String command;
   for (int i=0;i<length;i++) {
