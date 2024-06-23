@@ -244,7 +244,10 @@ void onMessageReceive(char* topic, byte* payload, unsigned int length) {
 
 ## Ergebnisse
 
-// Insert rover images here
+![Rover vorbereitet für die Verkabelung](images/rover-blank.jpg)
+Dieses Bild zeigt den Rover, wie er umgebaut wurde, damit der Arduino und das Steckbrett auf dem Rover platz haben. Die folgenden zwei Bilder zeigen dann den Rover, wie er fertig verkabelt wurde.
+![Rover vorbereitet für die Verkabelung](images/rover-finished-side.jpg)
+![Rover vorbereitet für die Verkabelung](images/rover-finished-top.jpg)
 
 // insert rover video here
 
